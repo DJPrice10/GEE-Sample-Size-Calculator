@@ -101,14 +101,6 @@ ui <- fluidPage(
 )
 
 
-# lt_zero <- function(x){
-# 	if (x < 0){
-# 		FALSE
-# 		else(
-# 			TRUE
-# 		)
-# 	}
-# }
 
 
 # SERVER
