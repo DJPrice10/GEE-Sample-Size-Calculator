@@ -17,9 +17,9 @@ ui <- fluidPage(
              tabPanel("Information",
                       titlePanel("Information"),
                       br(),
-                      "This calculator can be used to calculate the target sample size for two-arm, parallel group, 
-                      randomised controlled trials including both singletons and twins or twins only when the outcome of 
-                      interest is a continuous or binary outcome that is measured on the infant. The sample size is calculated 
+                      "This calculator can be used to calculate the target sample size for two-arm, parallel group, randomised 
+                      controlled trials including both singletons and twins or twins only when the outcome of interest is measured 
+                      on the infant and is continuous or binary. The sample size is calculated 
                       assuming the analysis will be performed using generalised estimating equations (GEEs) with an independence 
                       or exchangeable working correlation structure, and that twins will be randomised to the same treatment group 
                       (cluster randomisation), independently of each other (individual randomisation), or to opposite treatment groups 
@@ -59,7 +59,7 @@ ui <- fluidPage(
                       # *Input() functions,
                       # *Output() functions
                       sidebarPanel(h3("User Inputs"),
-                                   helpText("If output is NaN, check that all inputs are feasible values."),
+                                   helpText("If output is NA, check that all inputs are feasible values."),
                                    br(),
                                    radioButtons(inputId = "outcome_type", label = "Type of Outcome", choices = c("Continuous","Binary"), inline = TRUE),
                                    helpText("Select outcome of interest."),
@@ -74,7 +74,7 @@ ui <- fluidPage(
                                    helpText("Enter the percentage of mothers you expect will have a twin birth OR the percentage of infants you expect will be a twin in your trial. 
                                             The other percentage will be calculated automatically."),
                                    # sliderInput(inputId = "ICC", label = "Intraclass Correlation Coefficient (ICC)", value = 0.5, min = 0, max = 1)
-                                   numericInput(inputId = "ICC", label = "Intracluster Correlation Coefficient (ICC)", value = 0.5, min=-1, max=1, step = 0.1, width=validateCssUnit("50%")),
+                                   numericInput(inputId = "ICC", label = "Intracluster Correlation Coefficient (ICC)", value = 0.5, min=-1, max=1, step = 0.01, width=validateCssUnit("50%")),
                                    helpText("Enter your best estimate of the correlation between outcomes of infants from the same birth for your trial."),
                                    radioButtons(inputId = "corr_struct", label = "GEE Working Correlation Structure", choices = list("Independence", "Exchangeable"), inline = TRUE),
                                    helpText("Specify whether data from your trial will be analysed assuming an independence (recommended) or exchangeable working correlation structure."),
@@ -169,10 +169,15 @@ server <- function(input, output, session) {
     
     # Check that inputs are reasonable values
     if((input$Indep_N_per_group<1) | (input$pc_inf_twins<0 | input$pc_inf_twins>100) | (input$ICC< -1 | input$ICC >1) | (input$trt_grp_prev<0 | input$trt_grp_prev>100) | (input$cont_grp_prev<0 | input$cont_grp_prev>100) ){
-      indep.de.values <- NaN
-      exch.de.values <- NaN
+      indep.de.values <- NA
+      exch.de.values <- NA
     }
     
+    # Subtract a small amount from DE value, to fix rounding issue. 
+    # Sample sizes are rounded up so subtracting a small amount shouldn't reduce sample size, 
+    # but will fix those instances where the sample size was incorrectly rounded up.
+    indep.de.values <- indep.de.values - (1E-14)
+    exch.de.values <- exch.de.values - (1E-14)
     
     if(input$rand_method=="Cluster"){
       
